@@ -39,7 +39,8 @@ def gen_array_schema(obj):
         if all(first_schema == s for s in schemas):
             schema['items'] = first_schema
         else:
-            schema['items'] = schemas
+            # FIXME: test for more types
+            schema['items'] = {'anyOf': [dict(e) for e in list(set(frozenset(d.items()) for d in schemas))]}
     return schema
 
 

@@ -38,8 +38,14 @@ class TestJsonSchemaGenerator(unittest.TestCase):
         self.assertEqual(generate_schema(long_number), expected)
 
     def test_list_with_items(self):
-        expected = {'$schema': u'http://json-schema.org/draft-04/schema', 'type': 'array', 'items': {'type': 'number'}}
+        expected = {'$schema': u'http://json-schema.org/draft-04/schema',
+                    'type': 'array', 'items': {'type': 'number'}}
         self.assertEqual(generate_schema([1, 2, 3]), expected)
+
+    def test_list_with_heterogeneous_items(self):
+        expected = {'$schema': u'http://json-schema.org/draft-04/schema', 'type': 'array',
+                    'items': {'anyOf': [{'type': 'number'}, {'type': 'string'}]}}
+        self.assertSchemaEqual(generate_schema([1, 2, "3"]), expected)
 
     def test_simple_object(self):
         self.assertEqual(generate_schema({"something": "ai"}),
@@ -55,10 +61,13 @@ class TestJsonSchemaGenerator(unittest.TestCase):
 
         schema_type = schema1.get('type')
 
-        if schema_type:
+        if schema_type == 'object':
             for k, v in schema1.get('properties').items():
                 self.assertIn(k, schema2['properties'])
             self.assertEqual(sorted(schema1.get('required')), sorted(schema2.get('required')))
+
+        if schema1.get('anyOf'):
+            self.assertEqual(sorted(schema1.get('anyOf')), sorted(schema2.get('anyOf')))
 
     def test_with_linkedin_minimal_example(self):
         data = fixtures.get_sample('minimal-1.json')
